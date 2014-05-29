@@ -1,0 +1,230 @@
+<html>
+<head>
+	<title>BI Dashboard</title>
+	<meta charset=utf-8>
+	<!-- css stylesheets -->
+	<link rel="shortcut icon" href="http://www.breproperties.com/sites/all/themes/bre/favicon.ico">
+	<link rel="stylesheet" type="text/css" href="./style.css" media="screen" title="no title" charset="utf-8">
+	<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700' >
+	<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Monda:400,700' >
+	<!-- d3.js -->
+	<script src = "http://d3js.org/d3.v3.min.js" charset ="utf-8"></script>
+	<script src = "http://d3js.org/topojson.v1.min.js"></script>	
+	<!-- jquery -->
+	<script type = "text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type = "text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js"></script>
+	<!-- google maps 
+	https://maps.googleapis.com/maps/api/js?key=AIzaSyBCmoDST4uUO-OaUPM061bfE87L5IN1muw&sensor=false -->
+</head>
+
+<body>
+
+<!-- begin top navigation box -->
+<div class="navbar"> PROPERTY RECAP 
+	<ul>
+		<li> 
+			<div id="about-button">
+			<a id="about-button" class="about-link" href="">ABOUT</a> 
+			</div>
+		</li>
+		<li>
+			<div id="twitter-button" class="share-button">
+			<a id="twitter-button" href="https://twitter.com/BREproperties" target="_blank"> </a> 
+			</div>
+		</li>
+		<li>
+			<div id="facebook-button" class="share-button"> 
+			<a id="facebook-button" href="https://www.facebook.com/pages/BRE-Properties-Inc/58918054634" target="_blank"> </a>
+			</div>
+		</li>
+		<li>	
+			<div id="email-button" class="share-button"> 
+			<a id="email-button" href="mailto:allhyperionsupport@breproperties.com" target="_blank"> </a>
+			</div>
+		</li>
+	</ul>
+</div>
+
+<div class="about-box">
+    <div class="about-close" style="cursor: pointer;">x</div>
+    <div class="about-content">
+        You can contribute to the BI dashboard cause by mentioning this website or improve it on <a href="https://github.com/biESSEX">GitHub</a> if you are a developer. <br><br>
+        This website is developed by <a href="mailto:tliu@essex.com?Subject=Love%20the%20d3.js%20dashboard">Thomas Liu</a> with the help of <a href="mailto:cratner@essex.com?Subject=Love%20the%20d3.js%20Dashboard">Ched Ratner</a> and support from many former <a href="http://www.breproperties.com/">BRE Properties</a> employees who believed in the cause. <br><br>
+		Special thanks to Christophe Viau <a href="https://twitter.com/d3visualization">@d3visualization</a> for inspiration.
+    </div>
+</div>
+<!-- end top navigation box -->
+
+
+<div id="list">
+
+<style>
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+</style>
+
+
+<!-- dashboard object -->
+<script>
+// js for the about us box
+d3.select('.about-link').on('click', function(d, i)
+{
+d3.event.preventDefault();
+d3.select('.about-box').style({display: 'block'});
+})
+d3.select('.about-close').on('click', function(d, i){ d3.select('.about-box').style({display: 'none'}); });
+
+
+var margin = {top: 20, right: 80, bottom: 30, left: 50},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var parseDate = d3.time.format("%Y-%m-%d").parse;
+
+var x = d3.time.scale()
+    .range([0, width]);
+
+var y = d3.scale.linear()
+    .range([height, 0]);
+
+var color = d3.scale.category10();
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+	.ticks(d3.time.months)
+	.tickSize(16,0)
+	.tickFormat(d3.time.format("%b %y"));
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left");
+
+var line = d3.svg.line()
+    .interpolate("basis")
+    .x(function(d) { return x(d.date); })
+    .y(function(d) { return y(d.physocc); });
+
+var svg = d3.select('#list').append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+d3.csv("test.csv", function(error, data) {
+  color.domain(d3.keys(data[0]).filter(function(key) { return key !== "date"; }));
+
+  data.forEach(function(d) {
+    d.date = parseDate(d.date);
+  });
+
+  var p = color.domain().map(function(name) {
+    return {
+      name: name,
+      values: data.map(function(d) {
+        return {date: d.date, physocc: +d[name]};
+      })
+    };
+  });
+
+  x.domain(d3.extent(data, function(d) { return d.date; }));
+
+  y.domain([
+    d3.min(p, function(c) { return d3.min(c.values, function(v) { return v.physocc; }); }),
+    d3.max(p, function(c) { return d3.max(c.values, function(v) { return v.physocc; }); })
+  ]);
+
+  var legend = svg.selectAll('g')
+      .data(p)
+      .enter()
+    .append('g')
+      .attr('class', 'legend');
+    
+  legend.append('rect')
+      .attr('x', width - 20)
+      .attr('y', function(d, i){ return i *  20;})
+      .attr('width', 10)
+      .attr('height', 10)
+      .style('fill', function(d) { 
+        return color(d.name);
+      });
+      
+  legend.append('text')
+      .attr('x', width - 8)
+      .attr('y', function(d, i){ return (i *  20) + 9;})
+      .text(function(d){ return d.name; });
+  
+  svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis);
+
+  svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+    .append("text")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -35)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Physical Occupancy (%)");
+
+  var prop = svg.selectAll(".prop")
+      .data(p)
+      .enter().append("g")
+      .attr("class", "prop")
+	  .attr('class', 'dot')
+	  .on("mouseover", function(d) {
+		  d3.select(this)
+			  .attr("r", 8)
+			  .attr("class", "dot-selected")
+			  .transition()
+			  .duration(750);
+		  })
+	  .on("mouseout", function(d) {
+		  d3.select(this)
+		  .attr("r", 3)
+		  .attr("class", "dot")
+		  .transition()
+		  .duration(750);
+		  });
+
+  prop.append("path")
+      .attr("class", "line")
+      .attr("d", function(d) { return line(d.values); })
+      .style("stroke", function(d) { return color(d.name); });
+	  
+
+	  
+
+
+	  
+});
+</script>
+</div>
+
+<!-- begin left pane 
+<div id="nav">
+    <div id="console" class="menu1-container"></div>
+    <div class="menu2-container">
+        <input type="text" class="menu2-search" />
+    </div>
+</div>
+end left pane
+
+begin charts and s***
+<div id = "list">
+	<div id="metrics" class="menu3-container"></div>
+</div>
+end charts and s*** -->
+
+</body>
+</html>
