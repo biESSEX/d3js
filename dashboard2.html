@@ -1,0 +1,124 @@
+<html>
+<head>
+	<title>BI Dashboard</title>
+	<meta charset=utf-8>
+	<!-- css stylesheets -->
+	<link rel="shortcut icon" href="http://www.breproperties.com/sites/all/themes/bre/favicon.ico">
+	<link rel="stylesheet" type="text/css" href="./style.css" media="screen" title="no title" charset="utf-8">
+	<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Open+Sans+Condensed:700' >
+	<link rel='stylesheet' type='text/css' href='http://fonts.googleapis.com/css?family=Monda:400,700' >
+	<!-- d3.js -->
+	<script src = "http://d3js.org/d3.v3.min.js" charset ="utf-8"></script>
+	<script src = "http://dimplejs.org/dist/dimple.v2.0.0.min.js"></script>
+	<script src = "http://d3js.org/topojson.v1.min.js"></script>
+	<!-- jquery -->
+	<script type = "text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+	<script type = "text/javascript" src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.8.21/jquery-ui.min.js"></script>	
+	<!-- google maps 
+	https://maps.googleapis.com/maps/api/js?key=AIzaSyBCmoDST4uUO-OaUPM061bfE87L5IN1muw&sensor=false -->
+</head>
+
+<body>
+
+<!-- begin top navigation box -->
+<div class="navbar"> PROPERTY RECAP 
+	<ul>
+		<li>	
+			<div id="email-button" class="share-button"> 
+			<a id="email-button" href="mailto:allhyperionsupport@breproperties.com" target="_blank"> </a>
+			</div>
+		</li>
+		<li>
+			<div id="twitter-button" class="share-button">
+			<a id="twitter-button" href="https://twitter.com/BREproperties" target="_blank"> </a> 
+			</div>
+		</li>
+		<li>
+			<div id="facebook-button" class="share-button"> 
+			<a id="facebook-button" href="https://www.facebook.com/pages/BRE-Properties-Inc/58918054634" target="_blank"> </a>
+			</div>
+		</li>
+		<li> 
+			<div id="about-button">
+			<a id="about-button" class="about-link" href="">ABOUT</a> 
+			</div>
+		</li>
+	</ul>
+</div>
+
+<div class="about-box">
+    <div class="about-close" style="cursor: pointer;">x</div>
+    <div class="about-content">
+        You can contribute to the BI dashboard cause by mentioning this website or improve it on <a href="https://github.com/biESSEX">GitHub</a> if you are a developer. <br><br>
+        This website is developed by <a href="mailto:tliu@essex.com?Subject=Love%20the%20d3.js%20dashboard">Thomas Liu</a> with the help of <a href="mailto:cratner@essex.com?Subject=Love%20the%20d3.js%20Dashboard">Ched Ratner</a> and support from many former <a href="http://www.breproperties.com/">BRE Properties</a> employees who believed in the cause. <br><br>
+		Special thanks to Christophe Viau <a href="https://twitter.com/d3visualization">@d3visualization</a> for inspiration.
+    </div>
+</div>
+<!-- end top navigation box -->
+
+
+<div id="list">
+
+<!-- dashboard object -->
+<script>
+	// js for the about us box
+	d3.select('.about-link').on('click', function(d, i)
+	{
+		d3.event.preventDefault();
+		d3.select('.about-box').style({display: 'block'});
+	})
+	d3.select('.about-close').on('click', function(d, i){ d3.select('.about-box').style({display: 'none'}); });
+
+	var svg = dimple.newSvg("#list", 1280, 900);
+	d3.csv("test2.csv", function(data) {
+		// filter for a few properties
+		data = dimple.filterData(data, "property", ["105","106","125"]);
+		
+		// create and position chart
+		var myChart = new dimple.chart(svg,data);
+		myChart.setBounds(60, 30, 1200, 800);
+		
+		var x = myChart.addTimeAxis("x", "date", "%Y-%m-%d", "%b-%y");
+		var y = myChart.addMeasureAxis("y", "physocc");
+
+		// order the x axis by date
+		x.addOrderRule("date");
+		
+		// show a label for every month
+		x.timePeriod = d3.time.month;
+		x.timeInterval = 1;
+
+		y.overrideMin = 90;
+		y.tickFormat = ',.2f';
+	
+		// add the line series on top of the bubbles;  bubbles
+		// and lines points will naturally fall in the same place
+		var s = myChart.addSeries("property", dimple.plot.line);
+		s.lineWeight = 2;
+		
+		// show legend on upper right corner
+		myChart.addLegend(1200, 750, 20, 300, "left");
+			
+		// draw the chart
+		myChart.draw(); 
+	});
+</script>
+</div>
+
+<!-- begin left pane 
+<div id="nav">
+    <div id="console" class="menu1-container"></div>
+    <div class="menu2-container">
+        <input type="text" class="menu2-search" />
+    </div>
+</div>
+end left pane
+
+begin charts and s***
+<div id = "list">
+	<div id="metrics" class="menu3-container"></div>
+</div>
+end charts and s*** -->
+
+</body>
+</html>
